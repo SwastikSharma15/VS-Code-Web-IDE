@@ -115,7 +115,7 @@ class BugClass {
 }
 
 class Runner {
-  constructor(char, x, y, delay, color) {
+  constructor(char, x, y, delay, color, width, height) {
     this.char = char;
     this.x = x;
     this.y = y;
@@ -126,17 +126,17 @@ class Runner {
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
 
-    this.size = 18;
+    this.size = 14;
     this.phase = Math.random() * 100;
-    this.legLength = 10;
-    this.armLength = 8;
+    this.legLength = 8;
+    this.armLength = 6;
 
     this.active = false;
     this.wakeDelay = delay;
     this.startTime = Date.now();
     this.isEaten = false;
-    this.width = window.innerWidth;
-    this.height = window.innerHeight;
+    this.width = width || 800;
+    this.height = height || 600;
   }
 
   update() {
@@ -269,7 +269,6 @@ const Index = () => {
   };
 
   const fileTree = [
-    { name: 'node_modules', type: 'folder', children: [] },
     { name: 'public', type: 'folder', children: [
       { name: 'index.html', type: 'file' },
       { name: 'favicon.ico', type: 'file' }
@@ -410,14 +409,87 @@ body {
     ));
   };
 
+  // Syntax highlighting helper
+  const highlightCode = (line) => {
+    // Keywords
+    const keywords = ['import', 'from', 'export', 'default', 'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'class', 'extends', 'new', 'this', 'try', 'catch', 'throw', 'async', 'await'];
+    const jsxTags = /<\/?[A-Za-z][A-Za-z0-9.]*/g;
+    const strings = /(["'`])(?:(?!\1)[^\\]|\\.)*?\1/g;
+    const comments = /\/\/.*/g;
+    const numbers = /\b\d+\b/g;
+    
+    let result = [];
+    let lastIndex = 0;
+    let tempLine = line;
+    
+    // Simple tokenizer - process strings first
+    const parts = [];
+    let match;
+    
+    // Find all strings
+    const stringMatches = [];
+    while ((match = strings.exec(line)) !== null) {
+      stringMatches.push({ start: match.index, end: match.index + match[0].length, text: match[0], type: 'string' });
+    }
+    
+    // Find all comments
+    const commentMatches = [];
+    strings.lastIndex = 0;
+    while ((match = comments.exec(line)) !== null) {
+      commentMatches.push({ start: match.index, end: match.index + match[0].length, text: match[0], type: 'comment' });
+    }
+    
+    // Build result
+    let pos = 0;
+    const allMatches = [...stringMatches, ...commentMatches].sort((a, b) => a.start - b.start);
+    
+    const processText = (text) => {
+      // Highlight keywords
+      let processed = text;
+      keywords.forEach(kw => {
+        const regex = new RegExp(`\\b${kw}\\b`, 'g');
+        processed = processed.replace(regex, `<kw>${kw}</kw>`);
+      });
+      // Highlight JSX tags
+      processed = processed.replace(jsxTags, (m) => `<jsx>${m}</jsx>`);
+      // Highlight numbers
+      processed = processed.replace(numbers, (m) => `<num>${m}</num>`);
+      return processed;
+    };
+    
+    if (allMatches.length === 0) {
+      return <span dangerouslySetInnerHTML={{ __html: processText(line).replace(/<kw>/g, '<span style="color:#c586c0">').replace(/<\/kw>/g, '</span>').replace(/<jsx>/g, '<span style="color:#4ec9b0">').replace(/<\/jsx>/g, '</span>').replace(/<num>/g, '<span style="color:#b5cea8">').replace(/<\/num>/g, '</span>') }} />;
+    }
+    
+    allMatches.forEach((m, i) => {
+      if (m.start > pos) {
+        const before = line.slice(pos, m.start);
+        parts.push(<span key={`t${i}`} dangerouslySetInnerHTML={{ __html: processText(before).replace(/<kw>/g, '<span style="color:#c586c0">').replace(/<\/kw>/g, '</span>').replace(/<jsx>/g, '<span style="color:#4ec9b0">').replace(/<\/jsx>/g, '</span>').replace(/<num>/g, '<span style="color:#b5cea8">').replace(/<\/num>/g, '</span>') }} />);
+      }
+      if (m.type === 'string') {
+        parts.push(<span key={`s${i}`} style={{ color: '#ce9178' }}>{m.text}</span>);
+      } else if (m.type === 'comment') {
+        parts.push(<span key={`c${i}`} style={{ color: '#6a9955' }}>{m.text}</span>);
+      }
+      pos = m.end;
+    });
+    
+    if (pos < line.length) {
+      const after = line.slice(pos);
+      parts.push(<span key="last" dangerouslySetInnerHTML={{ __html: processText(after).replace(/<kw>/g, '<span style="color:#c586c0">').replace(/<\/kw>/g, '</span>').replace(/<jsx>/g, '<span style="color:#4ec9b0">').replace(/<\/jsx>/g, '</span>').replace(/<num>/g, '<span style="color:#b5cea8">').replace(/<\/num>/g, '</span>') }} />);
+    }
+    
+    return <>{parts}</>;
+  };
+
   const renderCode = (code) => {
     return code.split('\n').map((line, i) => (
       <div key={i} className="flex">
         <span className="w-12 text-right pr-4 text-[#858585] select-none">
           {i + 1}
         </span>
-        <span className="flex-1 text-[#d4d4d4]">
-          {line || '\u00A0'}
+        <span className="flex-1">
+          {highlightCode(line) || '\u00A0'}
         </span>
       </div>
     ));
@@ -454,21 +526,24 @@ body {
 
   const startRunning = () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const editorArea = editorRef.current;
+    if (!canvas || !editorArea) return;
 
+    const rect = editorArea.getBoundingClientRect();
     const ctx = canvas.getContext('2d');
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = rect.width;
+    const height = rect.height;
     
     canvas.width = width;
     canvas.height = height;
 
-    ctx.font = "16px 'Fira Code', monospace";
+    ctx.font = "14px 'Fira Code', monospace";
     const charWidth = ctx.measureText('M').width;
     
     const fontSize = 14;
     const lineHeight = fontSize * 1.6;
     const padding = 8;
+    const lineNumberWidth = 48;
 
     const code = codeContent[activeFile] || '';
     
@@ -480,6 +555,7 @@ body {
     let currentSpawnInterval = INITIAL_SPAWN_RATE;
     let accumulatedDelay = 0;
 
+    // Use syntax highlighting colors
     const colors = ['#d4d4d4', '#569cd6', '#4ec9b0', '#ce9178', '#6a9955', '#dcdcaa', '#c586c0'];
 
     for (let i = 0; i < code.length; i++) {
@@ -496,8 +572,8 @@ body {
       }
 
       if (!char.match(/\s/)) {
-        const x = padding + (col * charWidth) + (charWidth / 2) + 300;
-        const y = padding + (row * lineHeight) + (lineHeight / 2) + 100;
+        const x = lineNumberWidth + padding + (col * charWidth) + (charWidth / 2);
+        const y = padding + (row * lineHeight) + (lineHeight / 2);
         
         const color = colors[Math.floor(Math.random() * colors.length)];
         runnersRef.current.push(new Runner(char, x, y, accumulatedDelay, color));
@@ -543,9 +619,10 @@ body {
 
   useEffect(() => {
     const handleResize = () => {
-      if (canvasRef.current && isRunning) {
-        canvasRef.current.width = window.innerWidth;
-        canvasRef.current.height = window.innerHeight;
+      if (canvasRef.current && editorRef.current && isRunning) {
+        const rect = editorRef.current.getBoundingClientRect();
+        canvasRef.current.width = rect.width;
+        canvasRef.current.height = rect.height;
       }
     };
     window.addEventListener('resize', handleResize);
@@ -554,49 +631,9 @@ body {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#1e1e1e] text-[#cccccc] overflow-hidden relative">
-      {/* Canvas for animation */}
-      <canvas
-        ref={canvasRef}
-        className={`fixed top-0 left-0 w-full h-full z-10 pointer-events-none ${!isRunning ? 'hidden' : ''}`}
-      />
-
-      {/* Game Controls */}
-      {isRunning && (
-        <>
-          <button
-            onClick={resetGame}
-            className="fixed top-4 left-4 z-30 bg-white/10 text-white border border-white/20 px-4 py-2 rounded-lg font-semibold backdrop-blur-sm hover:bg-white/20 transition-colors"
-          >
-            Back to Code
-          </button>
-          <button
-            onClick={() => setShowHands(!showHands)}
-            className="fixed top-4 right-36 z-30 bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
-          >
-            Hands: {showHands ? 'ON' : 'OFF'}
-          </button>
-          <button
-            onClick={spawnBug}
-            className="fixed top-4 right-4 z-30 bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition-colors shadow-lg"
-          >
-            Spawn Bug 🪰
-          </button>
-        </>
-      )}
-
-      {/* Run Button */}
-      {!isRunning && (
-        <button
-          onClick={startRunning}
-          className="fixed bottom-8 right-8 z-20 bg-indigo-500 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-indigo-600 transition-all hover:-translate-y-0.5 shadow-lg shadow-indigo-500/40"
-        >
-          <Play className="w-5 h-5" />
-          RUN CODE
-        </button>
-      )}
 
       {/* UI Container */}
-      <div className={`flex flex-col h-full transition-opacity duration-500 ${isRunning ? 'opacity-0 pointer-events-none' : ''}`}>
+      <div className="flex flex-col h-full">
         {/* Title Bar */}
         <div className="h-8 bg-[#323233] flex items-center px-4 text-xs">
           <div className="flex items-center gap-4">
@@ -710,8 +747,52 @@ body {
             </div>
 
             {/* Code Editor */}
-            <div ref={editorRef} className="flex-1 bg-[#1e1e1e] overflow-auto font-mono text-sm leading-5">
-              <div className="p-2">
+            <div ref={editorRef} className="flex-1 bg-[#1e1e1e] overflow-auto font-mono text-sm leading-5 relative">
+              {/* Canvas overlay for animation - inside editor */}
+              <canvas
+                ref={canvasRef}
+                className={`absolute top-0 left-0 w-full h-full z-10 ${!isRunning ? 'hidden' : ''}`}
+                style={{ pointerEvents: isRunning ? 'auto' : 'none' }}
+              />
+              
+              {/* Game Controls - inside editor */}
+              {isRunning && (
+                <div className="absolute top-2 left-2 right-2 z-20 flex justify-between">
+                  <button
+                    onClick={resetGame}
+                    className="bg-white/10 text-white border border-white/20 px-3 py-1.5 rounded text-xs font-semibold backdrop-blur-sm hover:bg-white/20 transition-colors"
+                  >
+                    Back to Code
+                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowHands(!showHands)}
+                      className="bg-gray-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-gray-700 transition-colors"
+                    >
+                      Hands: {showHands ? 'ON' : 'OFF'}
+                    </button>
+                    <button
+                      onClick={spawnBug}
+                      className="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-red-600 transition-colors"
+                    >
+                      Spawn Bug 🪰
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Run Button - inside editor */}
+              {!isRunning && (
+                <button
+                  onClick={startRunning}
+                  className="absolute bottom-4 right-4 z-20 bg-indigo-500 text-white px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 hover:bg-indigo-600 transition-all hover:-translate-y-0.5 shadow-lg shadow-indigo-500/40"
+                >
+                  <Play className="w-4 h-4" />
+                  RUN CODE
+                </button>
+              )}
+
+              <div className={`p-2 ${isRunning ? 'opacity-0' : ''}`}>
                 {codeContent[activeFile] && renderCode(codeContent[activeFile])}
               </div>
             </div>
