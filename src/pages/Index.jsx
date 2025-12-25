@@ -269,25 +269,71 @@ const Index = () => {
   };
 
   const fileTree = [
+    { name: 'index.html', type: 'file' },
+    { name: 'package.json', type: 'file' },
+    { name: 'README.md', type: 'file' },
     { name: 'public', type: 'folder', children: [
-      { name: 'index.html', type: 'file' },
       { name: 'favicon.ico', type: 'file' }
     ]},
     { name: 'src', type: 'folder', children: [
       { name: 'components', type: 'folder', children: [
         { name: 'Button.jsx', type: 'file' },
-        { name: 'Header.jsx', type: 'file' },
-        { name: 'Card.jsx', type: 'file' }
+        { name: 'Header.jsx', type: 'file' }
       ]},
       { name: 'App.jsx', type: 'file' },
       { name: 'index.js', type: 'file' },
       { name: 'styles.css', type: 'file' }
-    ]},
-    { name: 'package.json', type: 'file' },
-    { name: 'README.md', type: 'file' }
+    ]}
   ];
 
   const codeContent = {
+    'index.html': `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My React App</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.js"></script>
+  </body>
+</html>`,
+    'package.json': `{
+  "name": "my-react-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^5.0.0"
+  }
+}`,
+    'README.md': `# My React App
+
+A simple React application built with Vite.
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Features
+
+- Fast development with Vite
+- React 18 with hooks
+- Component-based architecture`,
     'index.js': `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -309,13 +355,17 @@ import Button from './components/Button';
 function App() {
   const [count, setCount] = useState(0);
 
+  const handleIncrement = () => {
+    setCount(prev => prev + 1);
+  };
+
   return (
     <div className="app">
-      <Header title="My Application" />
-      <main>
-        <h1>Count: {count}</h1>
-        <Button onClick={() => setCount(c => c + 1)}>
-          Increment
+      <Header title="My React App" />
+      <main className="container">
+        <h2>Counter: {count}</h2>
+        <Button onClick={handleIncrement}>
+          Click me
         </Button>
       </main>
     </div>
@@ -323,6 +373,45 @@ function App() {
 }
 
 export default App;`,
+    'Header.jsx': `import React from 'react';
+
+function Header({ title }) {
+  return (
+    <header className="header">
+      <nav className="nav">
+        <h1 className="logo">{title}</h1>
+        <ul className="nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
+  );
+}
+
+export default Header;`,
+    'Button.jsx': `import React from 'react';
+
+function Button({ children, onClick, variant = 'primary' }) {
+  const baseStyles = 'btn';
+  const variants = {
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    outline: 'btn-outline'
+  };
+
+  return (
+    <button
+      className={\`\${baseStyles} \${variants[variant]}\`}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default Button;`,
     'styles.css': `* {
   margin: 0;
   padding: 0;
@@ -330,7 +419,7 @@ export default App;`,
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 
+  font-family: -apple-system, BlinkMacSystemFont,
     'Segoe UI', Roboto, sans-serif;
   background: #1e1e1e;
   color: #d4d4d4;
@@ -342,10 +431,34 @@ body {
   flex-direction: column;
 }
 
-.button {
-  padding: 8px 16px;
+.header {
+  background: #252526;
+  padding: 1rem 2rem;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
   border-radius: 4px;
+  border: none;
   cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background: #007acc;
+  color: white;
 }`
   };
 
