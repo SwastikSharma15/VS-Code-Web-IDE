@@ -241,6 +241,7 @@ const Index = () => {
   const [expandedFolders, setExpandedFolders] = useState(['src', 'components']);
   const [activeActivity, setActiveActivity] = useState('files');
   const [showTerminal, setShowTerminal] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   // Game state
   const [isRunning, setIsRunning] = useState(false);
@@ -767,7 +768,12 @@ const Index = () => {
             <span className="text-[#cccccc]/80">View</span>
             <span className="text-[#cccccc]/80">Go</span>
             <span className="text-[#cccccc]/80">Run</span>
-            <span className="text-[#cccccc]/80">Terminal</span>
+            <button
+              onClick={() => setShowTerminal(!showTerminal)}
+              className="text-[#cccccc]/80 hover:text-white cursor-pointer"
+            >
+              Terminal
+            </button>
             <span className="text-[#cccccc]/80">Help</span>
           </div>
           <div className="flex-1 text-center text-[#cccccc]/60">
@@ -785,35 +791,65 @@ const Index = () => {
           <div className="w-12 bg-[#333333] flex flex-col items-center py-2 gap-2 flex-shrink-0">
             <button
               className={`p-2 rounded ${activeActivity === 'files' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
-              onClick={() => setActiveActivity('files')}
+              onClick={() => {
+                if (activeActivity === 'files') {
+                  setShowSidebar(!showSidebar);
+                } else {
+                  setActiveActivity('files');
+                  setShowSidebar(true);
+                }
+              }}
             >
               <Files className="w-6 h-6" />
             </button>
             <button
               className={`p-2 rounded ${activeActivity === 'search' ? 'bg-[#ffffff10]' : 'hover:bg-[#ffffff10]'}`}
-              onClick={() => setActiveActivity('search')}
+              onClick={() => {
+                if (activeActivity === 'search') {
+                  setShowSidebar(!showSidebar);
+                } else {
+                  setActiveActivity('search');
+                  setShowSidebar(true);
+                }
+              }}
             >
               <Search className="w-6 h-6" />
             </button>
-            <button className="p-2 hover:bg-[#ffffff10] rounded">
+            <button
+              className="p-2 hover:bg-[#ffffff10] rounded"
+              onClick={() => setShowSidebar(false)}
+            >
               <GitBranch className="w-6 h-6" />
             </button>
-            <button className="p-2 hover:bg-[#ffffff10] rounded">
+            <button
+              className="p-2 hover:bg-[#ffffff10] rounded"
+              onClick={() => setShowSidebar(false)}
+            >
               <Bug className="w-6 h-6" />
             </button>
-            <button className="p-2 hover:bg-[#ffffff10] rounded">
+            <button
+              className="p-2 hover:bg-[#ffffff10] rounded"
+              onClick={() => setShowSidebar(false)}
+            >
               <Puzzle className="w-6 h-6" />
             </button>
             <div className="flex-1" />
-            <button className="p-2 hover:bg-[#ffffff10] rounded">
+            <button
+              className="p-2 hover:bg-[#ffffff10] rounded"
+              onClick={() => setShowSidebar(false)}
+            >
               <User className="w-6 h-6" />
             </button>
-            <button className="p-2 hover:bg-[#ffffff10] rounded">
+            <button
+              className="p-2 hover:bg-[#ffffff10] rounded"
+              onClick={() => setShowSidebar(false)}
+            >
               <Settings className="w-6 h-6" />
             </button>
           </div>
 
           {/* Sidebar */}
+          {showSidebar && (
           <div className="w-60 min-w-60 max-w-60 bg-[#252526] flex flex-col border-r border-[#3c3c3c] flex-shrink-0">
             <div className="h-8 px-4 flex items-center justify-between text-[11px] uppercase tracking-wider text-white flex-shrink-0">
               <span>Explorer</span>
@@ -827,6 +863,7 @@ const Index = () => {
               {renderFileTree(fileTree)}
             </div>
           </div>
+          )}
 
           {/* Main Editor Area */}
           <div className="flex-1 flex flex-col min-w-0 min-h-0">
