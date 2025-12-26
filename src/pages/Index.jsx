@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { 
+import {
   Files, Search, GitBranch, Bug, Puzzle, Settings, User,
   ChevronRight, ChevronDown, FileCode, FileJson, Folder, FolderOpen,
-  X, MoreHorizontal, SplitSquareVertical, Bell, 
+  X, MoreHorizontal, SplitSquareVertical, Bell,
   Check, GitCommit, RefreshCw, Cloud, Play
 } from 'lucide-react';
 
@@ -31,7 +31,7 @@ class BugClass {
   findTarget(runners) {
     let minDist = Infinity;
     let closest = null;
-    
+
     runners.forEach(runner => {
       if (!runner.active) return;
       const dx = runner.x - this.x;
@@ -55,7 +55,7 @@ class BugClass {
       const dy = this.target.y - this.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
       this.angle = Math.atan2(dy, dx);
-      
+
       this.x += Math.cos(this.angle) * this.speed;
       this.y += Math.sin(this.angle) * this.speed;
 
@@ -66,7 +66,7 @@ class BugClass {
     } else {
       this.x += Math.cos(this.angle) * this.speed;
       this.y += Math.sin(this.angle) * this.speed;
-      
+
       if (Math.random() < 0.05) {
         this.angle += (Math.random() - 0.5) * 2;
       }
@@ -90,11 +90,11 @@ class BugClass {
     const wingOffset = Math.sin(this.wingAngle) * 5;
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    
+
     ctx.beginPath();
     ctx.ellipse(-8 - wingOffset/2, 2, 12, 6, Math.PI/4, 0, Math.PI*2);
     ctx.fill();
-    
+
     ctx.beginPath();
     ctx.ellipse(8 + wingOffset/2, 2, 12, 6, -Math.PI/4, 0, Math.PI*2);
     ctx.fill();
@@ -120,7 +120,7 @@ class Runner {
     this.x = x;
     this.y = y;
     this.color = color || '#e5e7eb';
-    
+
     const speed = 0.5 + Math.random() * 1.5;
     const angle = Math.random() * Math.PI * 2;
     this.vx = Math.cos(angle) * speed;
@@ -155,7 +155,7 @@ class Runner {
       this.vx *= -1;
       this.x = Math.max(10, Math.min(this.width - 10, this.x));
     }
-    
+
     if (this.y < 10 || this.y > this.height - 10) {
       this.vy *= -1;
       this.y = Math.max(10, Math.min(this.height - 10, this.y));
@@ -164,7 +164,7 @@ class Runner {
     if (Math.random() < 0.02) {
       this.vx += (Math.random() - 0.5) * 0.5;
       this.vy += (Math.random() - 0.5) * 0.5;
-      
+
       const maxSpeed = MAX_RUNNER_SPEED;
       const speed = Math.sqrt(this.vx**2 + this.vy**2);
       if (speed > maxSpeed) {
@@ -192,7 +192,7 @@ class Runner {
 
     if (this.active && showHands) {
       const runCycle = (time + this.phase) * currentLimbSpeed;
-      
+
       ctx.lineWidth = 2;
       ctx.strokeStyle = this.color;
       ctx.lineCap = 'round';
@@ -241,7 +241,7 @@ const Index = () => {
   const [expandedFolders, setExpandedFolders] = useState(['src', 'components']);
   const [activeActivity, setActiveActivity] = useState('files');
   const [showTerminal, setShowTerminal] = useState(true);
-  
+
   // Game state
   const [isRunning, setIsRunning] = useState(false);
   const [showHands, setShowHands] = useState(true);
@@ -252,8 +252,8 @@ const Index = () => {
   const editorRef = useRef(null);
 
   const toggleFolder = (folder) => {
-    setExpandedFolders(prev => 
-      prev.includes(folder) 
+    setExpandedFolders(prev =>
+      prev.includes(folder)
         ? prev.filter(f => f !== folder)
         : [...prev, folder]
     );
@@ -269,205 +269,225 @@ const Index = () => {
   };
 
   const fileTree = [
+    { name: 'public', type: 'folder', children: [
+        { name: 'favicon.ico', type: 'file' }
+      ]},
+    { name: 'src', type: 'folder', children: [
+        { name: 'components', type: 'folder', children: [
+            { name: 'Button.jsx', type: 'file' },
+            { name: 'Header.jsx', type: 'file' }
+          ]},
+        { name: 'App.jsx', type: 'file' },
+        { name: 'index.js', type: 'file' },
+        { name: 'styles.css', type: 'file' }
+      ]},
     { name: 'index.html', type: 'file' },
     { name: 'package.json', type: 'file' },
-    { name: 'README.md', type: 'file' },
-    { name: 'public', type: 'folder', children: [
-      { name: 'favicon.ico', type: 'file' }
-    ]},
-    { name: 'src', type: 'folder', children: [
-      { name: 'components', type: 'folder', children: [
-        { name: 'Button.jsx', type: 'file' },
-        { name: 'Header.jsx', type: 'file' }
-      ]},
-      { name: 'App.jsx', type: 'file' },
-      { name: 'index.js', type: 'file' },
-      { name: 'styles.css', type: 'file' }
-    ]}
+    { name: 'README.md', type: 'file' }
   ];
 
-  const codeContent = {
-    'index.html': `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My React App</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/index.js"></script>
-  </body>
-</html>`,
-    'package.json': `{
-  "name": "my-react-app",
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.0.0",
-    "vite": "^5.0.0"
-  }
-}`,
-    'README.md': `# My React App
-
-A simple React application built with Vite.
-
-## Getting Started
-
-\`\`\`bash
-npm install
-npm run dev
-\`\`\`
-
-## Features
-
-- Fast development with Vite
-- React 18 with hooks
-- Component-based architecture`,
-    'index.js': `import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './styles.css';
-
-const root = ReactDOM.createRoot(
-  document.getElementById('root')
-);
-
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);`,
-    'App.jsx': `import React, { useState } from 'react';
-import Header from './components/Header';
-import Button from './components/Button';
-
-function App() {
-  const [count, setCount] = useState(0);
-
-  const handleIncrement = () => {
-    setCount(prev => prev + 1);
-  };
-
-  return (
-    <div className="app">
-      <Header title="My React App" />
-      <main className="container">
-        <h2>Counter: {count}</h2>
-        <Button onClick={handleIncrement}>
-          Click me
-        </Button>
-      </main>
-    </div>
-  );
-}
-
-export default App;`,
-    'Header.jsx': `import React from 'react';
-
-function Header({ title }) {
-  return (
-    <header className="header">
-      <nav className="nav">
-        <h1 className="logo">{title}</h1>
-        <ul className="nav-links">
-          <li><a href="/">Home</a></li>
-          <li><a href="/about">About</a></li>
-          <li><a href="/contact">Contact</a></li>
-        </ul>
-      </nav>
-    </header>
-  );
-}
-
-export default Header;`,
-    'Button.jsx': `import React from 'react';
-
-function Button({ children, onClick, variant = 'primary' }) {
-  const baseStyles = 'btn';
-  const variants = {
-    primary: 'btn-primary',
-    secondary: 'btn-secondary',
-    outline: 'btn-outline'
-  };
-
-  return (
-    <button
-      className={\`\${baseStyles} \${variants[variant]}\`}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-
-export default Button;`,
-    'styles.css': `* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, sans-serif;
-  background: #1e1e1e;
-  color: #d4d4d4;
-}
-
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  background: #252526;
-  padding: 1rem 2rem;
-}
-
-.nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-  list-style: none;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: #007acc;
-  color: white;
-}`
+  // Code content with proper indentation preserved
+  const CODE_FILES = {
+    'index.html': [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '  <head>',
+      '    <meta charset="UTF-8" />',
+      '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+      '    <title>My React App</title>',
+      '    <link rel="icon" type="image/x-icon" href="/favicon.ico" />',
+      '  </head>',
+      '  <body>',
+      '    <div id="root"></div>',
+      '    <script type="module" src="/src/index.js"></script>',
+      '  </body>',
+      '</html>'
+    ],
+    'package.json': [
+      '{',
+      '  "name": "my-react-app",',
+      '  "version": "1.0.0",',
+      '  "type": "module",',
+      '  "scripts": {',
+      '    "dev": "vite",',
+      '    "build": "vite build",',
+      '    "preview": "vite preview"',
+      '  },',
+      '  "dependencies": {',
+      '    "react": "^18.2.0",',
+      '    "react-dom": "^18.2.0"',
+      '  },',
+      '  "devDependencies": {',
+      '    "@vitejs/plugin-react": "^4.0.0",',
+      '    "vite": "^5.0.0"',
+      '  }',
+      '}'
+    ],
+    'README.md': [
+      '# My React App',
+      '',
+      'A simple React application built with Vite.',
+      '',
+      '## Getting Started',
+      '',
+      '```bash',
+      'npm install',
+      'npm run dev',
+      '```',
+      '',
+      '## Features',
+      '',
+      '- Fast development with Vite',
+      '- React 18 with hooks',
+      '- Component-based architecture'
+    ],
+    'index.js': [
+      "import React from 'react';",
+      "import ReactDOM from 'react-dom/client';",
+      "import App from './App';",
+      "import './styles.css';",
+      '',
+      'const root = ReactDOM.createRoot(',
+      "  document.getElementById('root')",
+      ');',
+      '',
+      'root.render(',
+      '  <React.StrictMode>',
+      '    <App />',
+      '  </React.StrictMode>',
+      ');'
+    ],
+    'App.jsx': [
+      "import React, { useState } from 'react';",
+      "import Header from './components/Header';",
+      "import Button from './components/Button';",
+      '',
+      'function App() {',
+      '  const [count, setCount] = useState(0);',
+      '',
+      '  const handleIncrement = () => {',
+      '    setCount(prev => prev + 1);',
+      '  };',
+      '',
+      '  return (',
+      '    <div className="app">',
+      '      <Header title="My React App" />',
+      '      <main className="container">',
+      '        <h2>Counter: {count}</h2>',
+      '        <Button onClick={handleIncrement}>',
+      '          Click me',
+      '        </Button>',
+      '      </main>',
+      '    </div>',
+      '  );',
+      '}',
+      '',
+      'export default App;'
+    ],
+    'Header.jsx': [
+      "import React from 'react';",
+      '',
+      'function Header({ title }) {',
+      '  return (',
+      '    <header className="header">',
+      '      <nav className="nav">',
+      '        <h1 className="logo">{title}</h1>',
+      '        <ul className="nav-links">',
+      '          <li><a href="/">Home</a></li>',
+      '          <li><a href="/about">About</a></li>',
+      '          <li><a href="/contact">Contact</a></li>',
+      '        </ul>',
+      '      </nav>',
+      '    </header>',
+      '  );',
+      '}',
+      '',
+      'export default Header;'
+    ],
+    'Button.jsx': [
+      "import React from 'react';",
+      '',
+      "function Button({ children, onClick, variant = 'primary' }) {",
+      "  const baseStyles = 'btn';",
+      '  const variants = {',
+      "    primary: 'btn-primary',",
+      "    secondary: 'btn-secondary',",
+      "    outline: 'btn-outline'",
+      '  };',
+      '',
+      '  return (',
+      '    <button',
+      '      className={`${baseStyles} ${variants[variant]}`}',
+      '      onClick={onClick}',
+      '    >',
+      '      {children}',
+      '    </button>',
+      '  );',
+      '}',
+      '',
+      'export default Button;'
+    ],
+    'styles.css': [
+      '* {',
+      '  margin: 0;',
+      '  padding: 0;',
+      '  box-sizing: border-box;',
+      '}',
+      '',
+      'body {',
+      '  font-family: -apple-system, BlinkMacSystemFont,',
+      "    'Segoe UI', Roboto, sans-serif;",
+      '  background: #1e1e1e;',
+      '  color: #d4d4d4;',
+      '}',
+      '',
+      '.app {',
+      '  min-height: 100vh;',
+      '  display: flex;',
+      '  flex-direction: column;',
+      '}',
+      '',
+      '.header {',
+      '  background: #252526;',
+      '  padding: 1rem 2rem;',
+      '}',
+      '',
+      '.nav {',
+      '  display: flex;',
+      '  justify-content: space-between;',
+      '  align-items: center;',
+      '}',
+      '',
+      '.nav-links {',
+      '  display: flex;',
+      '  gap: 1.5rem;',
+      '  list-style: none;',
+      '}',
+      '',
+      '.btn {',
+      '  padding: 0.5rem 1rem;',
+      '  border-radius: 4px;',
+      '  border: none;',
+      '  cursor: pointer;',
+      '  font-weight: 500;',
+      '}',
+      '',
+      '.btn-primary {',
+      '  background: #007acc;',
+      '  color: white;',
+      '}'
+    ]
   };
 
   const getFileIcon = (filename) => {
-    if (filename.endsWith('.jsx') || filename.endsWith('.js')) {
-      return <FileCode className="w-4 h-4 text-yellow-400" />;
+    if (filename.endsWith('.js')) {
+      return <FileCode className="w-4 h-4" style={{ color: '#F7DF1E' }} />;
+    }
+    if (filename.endsWith('.jsx')) {
+      return <FileCode className="w-4 h-4" style={{ color: '#FFD54F' }} />;
     }
     if (filename.endsWith('.json')) {
-      return <FileJson className="w-4 h-4 text-yellow-600" />;
+      return <FileJson className="w-4 h-4" style={{ color: '#d4a72c' }} />;
     }
     if (filename.endsWith('.css')) {
       return <FileCode className="w-4 h-4 text-blue-400" />;
@@ -524,56 +544,49 @@ body {
 
   // Syntax highlighting helper
   const highlightCode = (line) => {
-    // Keywords
     const keywords = ['import', 'from', 'export', 'default', 'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'class', 'extends', 'new', 'this', 'try', 'catch', 'throw', 'async', 'await'];
-    const jsxTags = /<\/?[A-Za-z][A-Za-z0-9.]*/g;
     const strings = /(["'`])(?:(?!\1)[^\\]|\\.)*?\1/g;
     const comments = /\/\/.*/g;
     const numbers = /\b\d+\b/g;
-    
+    const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const jsxTags = /&lt;\/?[A-Za-z][A-Za-z0-9.]*/g;
+
     let result = [];
     let lastIndex = 0;
     let tempLine = line;
-    
-    // Simple tokenizer - process strings first
+
     const parts = [];
     let match;
-    
-    // Find all strings
+
     const stringMatches = [];
     while ((match = strings.exec(line)) !== null) {
       stringMatches.push({ start: match.index, end: match.index + match[0].length, text: match[0], type: 'string' });
     }
-    
-    // Find all comments
+
     const commentMatches = [];
     strings.lastIndex = 0;
     while ((match = comments.exec(line)) !== null) {
       commentMatches.push({ start: match.index, end: match.index + match[0].length, text: match[0], type: 'comment' });
     }
-    
-    // Build result
+
     let pos = 0;
     const allMatches = [...stringMatches, ...commentMatches].sort((a, b) => a.start - b.start);
-    
+
     const processText = (text) => {
-      // Highlight keywords
-      let processed = text;
+      let processed = escapeHtml(text);
       keywords.forEach(kw => {
         const regex = new RegExp(`\\b${kw}\\b`, 'g');
         processed = processed.replace(regex, `<kw>${kw}</kw>`);
       });
-      // Highlight JSX tags
       processed = processed.replace(jsxTags, (m) => `<jsx>${m}</jsx>`);
-      // Highlight numbers
       processed = processed.replace(numbers, (m) => `<num>${m}</num>`);
       return processed;
     };
-    
+
     if (allMatches.length === 0) {
       return <span dangerouslySetInnerHTML={{ __html: processText(line).replace(/<kw>/g, '<span style="color:#c586c0">').replace(/<\/kw>/g, '</span>').replace(/<jsx>/g, '<span style="color:#4ec9b0">').replace(/<\/jsx>/g, '</span>').replace(/<num>/g, '<span style="color:#b5cea8">').replace(/<\/num>/g, '</span>') }} />;
     }
-    
+
     allMatches.forEach((m, i) => {
       if (m.start > pos) {
         const before = line.slice(pos, m.start);
@@ -586,22 +599,22 @@ body {
       }
       pos = m.end;
     });
-    
+
     if (pos < line.length) {
       const after = line.slice(pos);
       parts.push(<span key="last" dangerouslySetInnerHTML={{ __html: processText(after).replace(/<kw>/g, '<span style="color:#c586c0">').replace(/<\/kw>/g, '</span>').replace(/<jsx>/g, '<span style="color:#4ec9b0">').replace(/<\/jsx>/g, '</span>').replace(/<num>/g, '<span style="color:#b5cea8">').replace(/<\/num>/g, '</span>') }} />);
     }
-    
+
     return <>{parts}</>;
   };
 
-  const renderCode = (code) => {
-    return code.split('\n').map((line, i) => (
+  const renderCode = (lines) => {
+    return lines.map((line, i) => (
       <div key={i} className="flex">
-        <span className="w-12 text-right pr-4 text-[#858585] select-none">
+        <span className="w-12 text-right pr-4 text-[#858585] select-none flex-shrink-0">
           {i + 1}
         </span>
-        <span className="flex-1">
+        <span className="flex-1" style={{ whiteSpace: 'pre' }}>
           {highlightCode(line) || '\u00A0'}
         </span>
       </div>
@@ -646,29 +659,29 @@ body {
     const ctx = canvas.getContext('2d');
     const width = rect.width;
     const height = rect.height;
-    
+
     canvas.width = width;
     canvas.height = height;
 
     ctx.font = "14px 'Fira Code', monospace";
     const charWidth = ctx.measureText('M').width;
-    
+
     const fontSize = 14;
     const lineHeight = fontSize * 1.6;
     const padding = 8;
     const lineNumberWidth = 48;
 
-    const code = codeContent[activeFile] || '';
-    
+    const codeLines = CODE_FILES[activeFile] || [];
+    const code = codeLines.join('\n');
+
     runnersRef.current = [];
     bugsRef.current = [];
-    
+
     let col = 0;
     let row = 0;
     let currentSpawnInterval = INITIAL_SPAWN_RATE;
     let accumulatedDelay = 0;
 
-    // Use syntax highlighting colors
     const colors = ['#d4d4d4', '#569cd6', '#4ec9b0', '#ce9178', '#6a9955', '#dcdcaa', '#c586c0'];
 
     for (let i = 0; i < code.length; i++) {
@@ -687,10 +700,10 @@ body {
       if (!char.match(/\s/)) {
         const x = lineNumberWidth + padding + (col * charWidth) + (charWidth / 2);
         const y = padding + (row * lineHeight) + (lineHeight / 2);
-        
+
         const color = colors[Math.floor(Math.random() * colors.length)];
         runnersRef.current.push(new Runner(char, x, y, accumulatedDelay, color));
-        
+
         accumulatedDelay += currentSpawnInterval;
         currentSpawnInterval = Math.max(MAX_SPAWN_RATE, currentSpawnInterval * SPAWN_ACCELERATION);
       }
@@ -743,12 +756,10 @@ body {
   }, [isRunning]);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#1e1e1e] text-[#cccccc] overflow-hidden relative">
-
-      {/* UI Container */}
-      <div className="flex flex-col h-full">
+    <div className="h-screen w-screen flex flex-col bg-[#1e1e1e] text-[#cccccc] overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Title Bar */}
-        <div className="h-8 bg-[#323233] flex items-center px-4 text-xs">
+        <div className="h-8 bg-[#323233] flex items-center px-4 text-xs flex-shrink-0">
           <div className="flex items-center gap-4">
             <span className="text-[#cccccc]/80">File</span>
             <span className="text-[#cccccc]/80">Edit</span>
@@ -769,16 +780,16 @@ body {
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Activity Bar */}
           <div className="w-12 bg-[#333333] flex flex-col items-center py-2 gap-2 flex-shrink-0">
-            <button 
+            <button
               className={`p-2 rounded ${activeActivity === 'files' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
               onClick={() => setActiveActivity('files')}
             >
               <Files className="w-6 h-6" />
             </button>
-            <button 
+            <button
               className={`p-2 rounded ${activeActivity === 'search' ? 'bg-[#ffffff10]' : 'hover:bg-[#ffffff10]'}`}
               onClick={() => setActiveActivity('search')}
             >
@@ -802,38 +813,38 @@ body {
             </button>
           </div>
 
-          {/* Sidebar - Fixed width */}
+          {/* Sidebar */}
           <div className="w-60 min-w-60 max-w-60 bg-[#252526] flex flex-col border-r border-[#3c3c3c] flex-shrink-0">
-            <div className="h-8 px-4 flex items-center justify-between text-[11px] uppercase tracking-wider text-white">
+            <div className="h-8 px-4 flex items-center justify-between text-[11px] uppercase tracking-wider text-white flex-shrink-0">
               <span>Explorer</span>
               <MoreHorizontal className="w-4 h-4" />
             </div>
-            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-white flex items-center gap-1">
+            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-white flex items-center gap-1 flex-shrink-0">
               <ChevronDown className="w-3 h-3" />
               my-project
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               {renderFileTree(fileTree)}
             </div>
           </div>
 
           {/* Main Editor Area */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0">
             {/* Tabs */}
-            <div className="h-9 bg-[#252526] flex items-center border-b border-[#3c3c3c]">
+            <div className="h-9 bg-[#252526] flex items-center border-b border-[#3c3c3c] flex-shrink-0">
               {openFiles.map(file => (
                 <div
                   key={file}
                   className={`h-full px-3 flex items-center gap-2 cursor-pointer border-r border-[#3c3c3c] text-sm ${
-                    activeFile === file 
-                      ? 'bg-[#1e1e1e] text-white' 
+                    activeFile === file
+                      ? 'bg-[#1e1e1e] text-white'
                       : 'bg-[#2d2d2d] text-[#969696] hover:bg-[#2a2a2a]'
                   }`}
                   onClick={() => setActiveFile(file)}
                 >
                   {getFileIcon(file)}
                   <span>{file}</span>
-                  <button 
+                  <button
                     className="ml-1 hover:bg-[#ffffff20] rounded p-0.5"
                     onClick={(e) => closeFile(file, e)}
                   >
@@ -853,22 +864,20 @@ body {
             </div>
 
             {/* Breadcrumb */}
-            <div className="h-6 bg-[#1e1e1e] px-4 flex items-center gap-1 text-xs text-[#969696] border-b border-[#3c3c3c]">
+            <div className="h-6 bg-[#1e1e1e] px-4 flex items-center gap-1 text-xs text-[#969696] border-b border-[#3c3c3c] flex-shrink-0">
               <span>src</span>
               <ChevronRight className="w-3 h-3" />
               <span className="text-[#cccccc]">{activeFile}</span>
             </div>
 
             {/* Code Editor */}
-            <div ref={editorRef} className="flex-1 bg-[#1e1e1e] overflow-auto font-mono text-sm leading-5 relative">
-              {/* Canvas overlay for animation - inside editor */}
+            <div ref={editorRef} className="flex-1 bg-[#1e1e1e] overflow-hidden font-mono text-sm leading-5 relative min-h-0">
               <canvas
                 ref={canvasRef}
                 className={`absolute top-0 left-0 w-full h-full z-10 ${!isRunning ? 'hidden' : ''}`}
                 style={{ pointerEvents: isRunning ? 'auto' : 'none' }}
               />
-              
-              {/* Game Controls - inside editor */}
+
               {isRunning && (
                 <div className="absolute top-2 left-2 right-2 z-20 flex justify-between">
                   <button
@@ -894,7 +903,6 @@ body {
                 </div>
               )}
 
-              {/* Run Button - inside editor */}
               {!isRunning && (
                 <button
                   onClick={startRunning}
@@ -905,15 +913,17 @@ body {
                 </button>
               )}
 
-              <div className={`p-2 ${isRunning ? 'opacity-0' : ''}`}>
-                {codeContent[activeFile] && renderCode(codeContent[activeFile])}
+              <div className={`h-full overflow-auto ${isRunning ? 'opacity-0' : ''}`}>
+                <div className="p-2">
+                  {CODE_FILES[activeFile] && renderCode(CODE_FILES[activeFile])}
+                </div>
               </div>
             </div>
 
             {/* Terminal Panel */}
             {showTerminal && (
-              <div className="h-48 bg-[#1e1e1e] border-t border-[#3c3c3c] flex flex-col">
-                <div className="h-8 bg-[#252526] flex items-center px-2 gap-4 text-xs">
+              <div className="h-48 bg-[#1e1e1e] border-t border-[#3c3c3c] flex flex-col flex-shrink-0">
+                <div className="h-8 bg-[#252526] flex items-center px-2 gap-4 text-xs flex-shrink-0">
                   <div className="flex items-center gap-4">
                     <span className="text-white border-b border-white pb-1">TERMINAL</span>
                     <span className="text-[#969696]">PROBLEMS</span>
@@ -921,14 +931,14 @@ body {
                     <span className="text-[#969696]">DEBUG CONSOLE</span>
                   </div>
                   <div className="flex-1" />
-                  <button 
+                  <button
                     className="hover:bg-[#ffffff10] p-1 rounded"
                     onClick={() => setShowTerminal(false)}
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex-1 p-2 font-mono text-sm overflow-auto">
+                <div className="flex-1 p-2 font-mono text-sm overflow-hidden">
                   <div className="text-[#569cd6]">~/my-project</div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#6a9955]">$</span>
@@ -938,11 +948,11 @@ body {
                     VITE v5.0.12  ready in 234 ms
                   </div>
                   <div className="mt-1">
-                    <span className="text-[#569cd6]">➜</span>  Local:   
+                    <span className="text-[#569cd6]">➜</span>  Local:
                     <span className="text-[#4ec9b0]"> http://localhost:5173/</span>
                   </div>
                   <div>
-                    <span className="text-[#569cd6]">➜</span>  Network: 
+                    <span className="text-[#569cd6]">➜</span>  Network:
                     <span className="text-[#969696]"> use --host to expose</span>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
@@ -956,7 +966,7 @@ body {
         </div>
 
         {/* Status Bar */}
-        <div className="h-6 bg-[#007acc] flex items-center px-2 text-xs text-white">
+        <div className="h-6 bg-[#007acc] flex items-center px-2 text-xs text-white flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
               <GitBranch className="w-3.5 h-3.5" />
