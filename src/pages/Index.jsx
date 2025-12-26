@@ -251,6 +251,10 @@ const Index = () => {
   const bugsRef = useRef([]);
   const animationIdRef = useRef(null);
   const editorRef = useRef(null);
+  const editorTextareaRef = useRef(null);
+  const lineGutterRef = useRef(null);
+  const highlightRef = useRef(null);
+  const lineGutterInnerRef = useRef(null);
 
   const toggleFolder = (folder) => {
     setExpandedFolders(prev =>
@@ -287,7 +291,7 @@ const Index = () => {
     { name: 'README.md', type: 'file' }
   ];
 
-  // Code content with proper indentation preserved
+  // Code content with proper indentation preserved (includes explicit blank lines as empty strings '')
   const CODE_FILES = {
     'index.html': [
       '<!DOCTYPE html>',
@@ -480,6 +484,92 @@ const Index = () => {
     ]
   };
 
+  // Editable files content state (initialized from CODE_FILES)
+  const [filesContent, setFilesContent] = useState(() => {
+    const initial = {};
+    Object.keys(CODE_FILES).forEach((k) => {
+      initial[k] = (CODE_FILES[k] || []).join('\n');
+    });
+    return initial;
+  });
+
+  // Ensure content exists when a new tab/file becomes active
+  useEffect(() => {
+    if (!(activeFile in filesContent)) {
+      setFilesContent((prev) => ({
+        ...prev,
+        [activeFile]: (CODE_FILES[activeFile] || []).join('\n'),
+      }));
+    }
+  }, [activeFile]);
+
+  // Keep gutter scroll in sync with textarea scroll
+  const handleEditorScroll = useCallback(() => {
+    const ta = editorTextareaRef.current;
+    const gutter = lineGutterRef.current;
+    const highlight = highlightRef.current;
+    // Single-scroll: textarea owns the only scrollbar.
+    // Move gutter numbers by translating an inner wrapper.
+    if (ta && lineGutterInnerRef.current) {
+      lineGutterInnerRef.current.style.transform = `translateY(-${ta.scrollTop}px)`;
+    }
+    if (ta && highlight) {
+      highlight.scrollTop = ta.scrollTop;
+      highlight.scrollLeft = ta.scrollLeft;
+    }
+  }, []);
+
+  // Ensure initial sync on mount/file change/content change
+  useEffect(() => {
+    handleEditorScroll();
+  }, [activeFile, filesContent[activeFile], handleEditorScroll]);
+
+  const handleEditorChange = useCallback((e) => {
+    const value = e.target.value;
+    setFilesContent((prev) => ({ ...prev, [activeFile]: value }));
+  }, [activeFile]);
+
+  const handleEditorKeyDown = useCallback((e) => {
+    const ta = editorTextareaRef.current;
+    if (!ta) return;
+
+    // Tab inserts two spaces
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const value = ta.value;
+      const insert = '  ';
+      const newValue = value.substring(0, start) + insert + value.substring(end);
+      setFilesContent((prev) => ({ ...prev, [activeFile]: newValue }));
+      requestAnimationFrame(() => {
+        ta.selectionStart = ta.selectionEnd = start + insert.length;
+      });
+      return;
+    }
+
+    // Enter: keep current line indentation
+    if (e.key === 'Enter') {
+      const value = ta.value;
+      const start = ta.selectionStart;
+      const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+      const currentLine = value.substring(lineStart, start);
+      const indentMatch = currentLine.match(/^[\t ]+/);
+      if (indentMatch) {
+        e.preventDefault();
+        const indent = indentMatch[0];
+        const insert = `\n${indent}`;
+        const end = ta.selectionEnd;
+        const newValue = value.substring(0, start) + insert + value.substring(end);
+        setFilesContent((prev) => ({ ...prev, [activeFile]: newValue }));
+        requestAnimationFrame(() => {
+          const pos = start + insert.length;
+          ta.selectionStart = ta.selectionEnd = pos;
+        });
+      }
+    }
+  }, [activeFile]);
+
   const getFileIcon = (filename) => {
     if (filename.endsWith('.js')) {
       return <FileCode className="w-4 h-4" style={{ color: '#F7DF1E' }} />;
@@ -612,7 +702,7 @@ const Index = () => {
   const renderCode = (lines) => {
     return lines.map((line, i) => (
       <div key={i} className="flex">
-        <span className="w-12 text-right pr-4 text-[#858585] select-none flex-shrink-0">
+        <span className="w-10 text-center pr-2 text-[#858585] select-none flex-shrink-0">
           {i + 1}
         </span>
         <span className="flex-1" style={{ whiteSpace: 'pre' }}>
@@ -672,43 +762,43 @@ const Index = () => {
     const padding = 8;
     const lineNumberWidth = 48;
 
-    const codeLines = CODE_FILES[activeFile] || [];
-    const code = codeLines.join('\n');
+    // Use the exact editor content and preserve all blank lines
+    const code = (filesContent[activeFile] !== undefined
+      ? filesContent[activeFile]
+      : (CODE_FILES[activeFile] || []).join('\n'));
+    const lines = code.split(/\r\n|\r|\n/);
 
     runnersRef.current = [];
     bugsRef.current = [];
 
-    let col = 0;
     let row = 0;
     let currentSpawnInterval = INITIAL_SPAWN_RATE;
     let accumulatedDelay = 0;
 
     const colors = ['#d4d4d4', '#569cd6', '#4ec9b0', '#ce9178', '#6a9955', '#dcdcaa', '#c586c0'];
 
-    for (let i = 0; i < code.length; i++) {
-      const char = code[i];
-
-      if (char === '\n') {
-        col = 0;
-        row++;
-        continue;
+    for (let r = 0; r < lines.length; r++) {
+      const line = lines[r];
+      let col = 0;
+      for (let c = 0; c < line.length; c++) {
+        const ch = line[c];
+        if (ch === '\t') {
+          col += 2; // render tabs as two spaces worth
+          continue;
+        }
+        if (!/\s/.test(ch)) {
+          const x = lineNumberWidth + padding + (col * charWidth) + (charWidth / 2);
+          const y = padding + (r * lineHeight) + (lineHeight / 2);
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          runnersRef.current.push(new Runner(ch, x, y, accumulatedDelay, color));
+          accumulatedDelay += currentSpawnInterval;
+          currentSpawnInterval = Math.max(MAX_SPAWN_RATE, currentSpawnInterval * SPAWN_ACCELERATION);
+        }
+        col++;
       }
-      if (char === '\t') {
-        col += 2;
-        continue;
-      }
-
-      if (!char.match(/\s/)) {
-        const x = lineNumberWidth + padding + (col * charWidth) + (charWidth / 2);
-        const y = padding + (row * lineHeight) + (lineHeight / 2);
-
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        runnersRef.current.push(new Runner(char, x, y, accumulatedDelay, color));
-
-        accumulatedDelay += currentSpawnInterval;
-        currentSpawnInterval = Math.max(MAX_SPAWN_RATE, currentSpawnInterval * SPAWN_ACCELERATION);
-      }
-      col++;
+      // Even if the line is blank/whitespace-only, advancing r via the loop
+      // ensures the Y placement of following lines respects blank lines.
+      row = r + 1;
     }
 
     setIsRunning(true);
@@ -950,9 +1040,58 @@ const Index = () => {
                 </button>
               )}
 
-              <div className={`h-full overflow-auto ${isRunning ? 'opacity-0' : ''}`}>
-                <div className="p-2">
-                  {CODE_FILES[activeFile] && renderCode(CODE_FILES[activeFile])}
+              <div className={`h-full ${isRunning ? 'opacity-0' : ''}`}>
+                <div className="h-full flex">
+                  {/* Line numbers gutter */}
+                  <div
+                    ref={lineGutterRef}
+                    className="w-12 select-none text-sm text-[#858585] text-right pr-2 py-2 overflow-hidden border-r border-[#3c3c3c] bg-[#1e1e1e]"
+                    style={{ lineHeight: '22px', fontSize: '14px' }}
+                  >
+                    <div ref={lineGutterInnerRef}>
+                      {(() => {
+                        // Number every line, including blank ones, so a new number appears immediately on Enter
+                        const content = filesContent[activeFile] ?? (CODE_FILES[activeFile] || []).join('\n');
+                        const lines = content.split(/\r\n|\r|\n/);
+                        return lines.map((_, i) => (
+                          <div key={i}>{i + 1}</div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Editable textarea */}
+                  <div className="flex-1 overflow-hidden relative">
+                    {/* Highlight backdrop (underneath) */}
+                    <div
+                      ref={highlightRef}
+                      className="absolute inset-0 overflow-auto hide-scrollbar p-2 font-mono text-sm whitespace-pre pointer-events-none"
+                      style={{ lineHeight: '22px', fontSize: '14px', tabSize: 2, fontVariantLigatures: 'none' }}
+                    >
+                      {(filesContent[activeFile] ?? (CODE_FILES[activeFile] || []).join('\n'))
+                        .split(/\r\n|\r|\n/)
+                        .map((line, i) => (
+                          <div key={i}>
+                            {line.length > 0
+                              ? highlightCode(line)
+                              : <span style={{ opacity: 0 }}>&nbsp;</span>}
+                          </div>
+                        ))}
+                    </div>
+
+                    {/* Transparent text input (on top) */}
+                    <textarea
+                      ref={editorTextareaRef}
+                      value={filesContent[activeFile] ?? (CODE_FILES[activeFile] || []).join('\n')}
+                      onChange={handleEditorChange}
+                      onKeyDown={handleEditorKeyDown}
+                      onScroll={handleEditorScroll}
+                      spellCheck={false}
+                      wrap="off"
+                      className="relative w-full h-full bg-transparent text-transparent font-mono text-sm outline-none p-2 caret-white overflow-auto"
+                      style={{ lineHeight: '22px', fontSize: '14px', tabSize: 2, whiteSpace: 'pre', fontVariantLigatures: 'none' }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
