@@ -270,7 +270,7 @@ const Index = () => {
 
   const fileTree = [
     { name: 'public', type: 'folder', children: [
-        { name: 'favicon.ico', type: 'file' }
+        { name: 'SpeedX_Logo_favicon.ico', type: 'file' }
       ]},
     { name: 'src', type: 'folder', children: [
         { name: 'components', type: 'folder', children: [
@@ -295,7 +295,7 @@ const Index = () => {
       '    <meta charset="UTF-8" />',
       '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
       '    <title>My React App</title>',
-      '    <link rel="icon" type="image/x-icon" href="/favicon.ico" />',
+      '    <link rel="icon" type="image/x-icon" href="/SpeedX_Logo_favicon.ico" />',
       '  </head>',
       '  <body>',
       '    <div id="root"></div>',
