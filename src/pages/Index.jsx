@@ -236,8 +236,8 @@ class Runner {
 }
 
 const Index = () => {
-  const [activeFile, setActiveFile] = useState('index.js');
-  const [openFiles, setOpenFiles] = useState(['index.js', 'App.jsx', 'styles.css']);
+  const [activeFile, setActiveFile] = useState('index.jsx');
+  const [openFiles, setOpenFiles] = useState(['index.jsx', 'App.jsx', 'styles.css']);
   const [expandedFolders, setExpandedFolders] = useState(['src', 'components']);
   const [activeActivity, setActiveActivity] = useState('files');
   const [showTerminal, setShowTerminal] = useState(true);
@@ -283,7 +283,7 @@ const Index = () => {
             { name: 'Header.jsx', type: 'file' }
           ]},
         { name: 'App.jsx', type: 'file' },
-        { name: 'index.js', type: 'file' },
+        { name: 'index.jsx', type: 'file' },
         { name: 'styles.css', type: 'file' }
       ]},
     { name: 'index.html', type: 'file' },
@@ -304,7 +304,7 @@ const Index = () => {
       '  </head>',
       '  <body>',
       '    <div id="root"></div>',
-      '    <script type="module" src="/src/index.js"></script>',
+      '    <script type="module" src="/src/index.jsx"></script>',
       '  </body>',
       '</html>'
     ],
@@ -346,7 +346,7 @@ const Index = () => {
       '- React 18 with hooks',
       '- Component-based architecture'
     ],
-    'index.js': [
+    'index.jsx': [
       "import React from 'react';",
       "import ReactDOM from 'react-dom/client';",
       "import App from './App';",
@@ -1167,7 +1167,7 @@ const Index = () => {
             <span>Spaces: 2</span>
             <span>UTF-8</span>
             <span>CRLF</span>
-            <span>{activeFile.endsWith('.jsx') ? 'JavaScript React' : activeFile.endsWith('.css') ? 'CSS' : 'JavaScript'}</span>
+            <span>{activeFile.endsWith('.jsx') ? 'JavaScript JSX' : activeFile.endsWith('.css') ? 'CSS' : 'JavaScript'}</span>
             <div className="flex items-center gap-1">
               <Cloud className="w-3.5 h-3.5" />
             </div>
