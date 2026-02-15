@@ -893,7 +893,7 @@ const Index = () => {
               <Files className="w-6 h-6" />
             </button>
             <button
-              className={`p-2 rounded ${activeActivity === 'search' ? 'bg-[#ffffff10]' : 'hover:bg-[#ffffff10]'}`}
+              className={`p-2 rounded ${activeActivity === 'search' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
               onClick={() => {
                 if (activeActivity === 'search') {
                   setShowSidebar(!showSidebar);
@@ -906,27 +906,55 @@ const Index = () => {
               <Search className="w-6 h-6" />
             </button>
             <button
-              className="p-2 hover:bg-[#ffffff10] rounded"
-              onClick={() => setShowSidebar(false)}
+              className={`p-2 rounded ${activeActivity === 'source' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
+              onClick={() => {
+                if (activeActivity === 'source') {
+                  setShowSidebar(!showSidebar);
+                } else {
+                  setActiveActivity('source');
+                  setShowSidebar(true);
+                }
+              }}
             >
               <GitBranch className="w-6 h-6" />
             </button>
             <button
-              className="p-2 hover:bg-[#ffffff10] rounded"
-              onClick={() => setShowSidebar(false)}
+              className={`p-2 rounded ${activeActivity === 'debug' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
+              onClick={() => {
+                if (activeActivity === 'debug') {
+                  setShowSidebar(!showSidebar);
+                } else {
+                  setActiveActivity('debug');
+                  setShowSidebar(true);
+                }
+              }}
             >
               <Bug className="w-6 h-6" />
             </button>
             <button
-              className="p-2 hover:bg-[#ffffff10] rounded"
-              onClick={() => setShowSidebar(false)}
+              className={`p-2 rounded ${activeActivity === 'extensions' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
+              onClick={() => {
+                if (activeActivity === 'extensions') {
+                  setShowSidebar(!showSidebar);
+                } else {
+                  setActiveActivity('extensions');
+                  setShowSidebar(true);
+                }
+              }}
             >
               <Puzzle className="w-6 h-6" />
             </button>
             <div className="flex-1" />
             <button
-              className="p-2 hover:bg-[#ffffff10] rounded"
-              onClick={() => setShowSidebar(false)}
+              className={`p-2 rounded ${activeActivity === 'credits' ? 'bg-[#ffffff10] border-l-2 border-white' : 'hover:bg-[#ffffff10]'}`}
+              onClick={() => {
+                if (activeActivity === 'credits') {
+                  setShowSidebar(!showSidebar);
+                } else {
+                  setActiveActivity('credits');
+                  setShowSidebar(true);
+                }
+              }}
             >
               <User className="w-6 h-6" />
             </button>
@@ -942,16 +970,168 @@ const Index = () => {
           {showSidebar && (
           <div className="w-60 min-w-60 max-w-60 bg-[#252526] flex flex-col border-r border-[#3c3c3c] flex-shrink-0">
             <div className="h-8 px-4 flex items-center justify-between text-[11px] uppercase tracking-wider text-white flex-shrink-0">
-              <span>Explorer</span>
+              <span>
+                {activeActivity === 'files' && 'Explorer'}
+                {activeActivity === 'search' && 'Search'}
+                {activeActivity === 'source' && 'Source Control'}
+                {activeActivity === 'debug' && 'Run & Debug'}
+                {activeActivity === 'extensions' && 'Extensions'}
+                {activeActivity === 'credits' && 'Credits'}
+              </span>
               <MoreHorizontal className="w-4 h-4" />
             </div>
-            <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-white flex items-center gap-1 flex-shrink-0">
-              <ChevronDown className="w-3 h-3" />
-              my-project
-            </div>
-            <div className="flex-1 overflow-y-auto min-h-0">
-              {renderFileTree(fileTree)}
-            </div>
+            
+            {/* Files Explorer */}
+            {activeActivity === 'files' && (
+              <>
+                <div className="px-2 py-1 text-[11px] uppercase tracking-wider text-white flex items-center gap-1 flex-shrink-0">
+                  <ChevronDown className="w-3 h-3" />
+                  my-project
+                </div>
+                <div className="flex-1 overflow-y-auto min-h-0">
+                  {renderFileTree(fileTree)}
+                </div>
+              </>
+            )}
+
+            {/* Search */}
+            {activeActivity === 'search' && (
+              <div className="flex-1 overflow-y-auto min-h-0 p-4 flex flex-col">
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search files..."
+                    className="w-full px-3 py-2 rounded bg-[#1e1e1e] border border-[#3c3c3c] text-[#cccccc] text-sm focus:outline-none focus:border-[#569cd6] placeholder-[#666]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[#cccccc]/60 text-xs">No results</div>
+                  <p className="text-[#cccccc]/50 text-xs leading-relaxed">
+                    Enter a search query to find files, functions, or text in your project.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Source Control */}
+            {activeActivity === 'source' && (
+              <div className="flex-1 overflow-y-auto min-h-0 p-4 flex flex-col">
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <GitBranch className="w-4 h-4 text-[#4ec9b0]" />
+                    <span className="text-sm text-white font-semibold">main</span>
+                  </div>
+                  <button className="w-full px-3 py-2 rounded bg-[#007acc] hover:bg-[#005a9e] text-white text-xs font-semibold transition-colors">
+                    Publish Branch
+                  </button>
+                </div>
+                <div className="border-t border-[#3c3c3c] pt-4">
+                  <p className="text-[#cccccc]/70 text-xs uppercase tracking-wider mb-2">Changes</p>
+                  <div className="text-[#cccccc]/60 text-xs">No changes</div>
+                </div>
+              </div>
+            )}
+
+            {/* Run & Debug */}
+            {activeActivity === 'debug' && (
+              <div className="flex-1 overflow-y-auto min-h-0 p-4 flex flex-col">
+                <div className="mb-4">
+                  <button className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded bg-[#007acc] hover:bg-[#005a9e] text-white text-sm font-semibold transition-colors">
+                    <Play className="w-4 h-4" />
+                    Start Debugging
+                  </button>
+                </div>
+                <div className="border-t border-[#3c3c3c] pt-4">
+                  <p className="text-[#cccccc]/70 text-xs uppercase tracking-wider mb-3">Breakpoints</p>
+                  <div className="text-[#cccccc]/60 text-xs">No breakpoints</div>
+                </div>
+                <div className="border-t border-[#3c3c3c] pt-4 mt-4">
+                  <p className="text-[#cccccc]/70 text-xs uppercase tracking-wider mb-3">Watch</p>
+                  <div className="text-[#cccccc]/60 text-xs">No watch expressions</div>
+                </div>
+              </div>
+            )}
+
+            {/* Extensions */}
+            {activeActivity === 'extensions' && (
+              <div className="flex-1 overflow-y-auto min-h-0 p-4 flex flex-col">
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search extensions..."
+                    className="w-full px-3 py-2 rounded bg-[#1e1e1e] border border-[#3c3c3c] text-[#cccccc] text-sm focus:outline-none focus:border-[#569cd6] placeholder-[#666]"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <div className="p-3 rounded bg-[#1e1e1e] border border-[#3c3c3c]">
+                    <p className="text-[#cccccc] text-xs font-semibold mb-1">Tailwind CSS IntelliSense</p>
+                    <p className="text-[#cccccc]/60 text-xs">Intelligent Tailwind CSS tooling</p>
+                  </div>
+                  <div className="p-3 rounded bg-[#1e1e1e] border border-[#3c3c3c]">
+                    <p className="text-[#cccccc] text-xs font-semibold mb-1">ES7+ React/Redux</p>
+                    <p className="text-[#cccccc]/60 text-xs">React snippets and autocomplete</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Credits */}
+            {activeActivity === 'credits' && (
+              <div className="flex-1 overflow-y-auto min-h-0 p-4 flex flex-col">
+                <div className="flex flex-col items-center text-center mb-6">
+                  <img 
+                    src="/swastik.jpeg" 
+                    alt="Swastik Sharma" 
+                    className="w-20 h-20 rounded-full mb-3 border border-[#3c3c3c] object-cover object-top"
+                  />
+                  <h2 className="text-white font-semibold text-sm">Swastik Sharma</h2>
+                  <p className="text-[#cccccc]/60 text-xs mt-1">Developer & Designer</p>
+                </div>
+
+                <p className="text-[#cccccc]/70 text-xs leading-relaxed mb-4">
+                  VS Code Web IDE - An interactive code editor with animated characters and fun gameplay elements.
+                </p>
+
+                <div className="border-t border-[#3c3c3c] pt-4 mt-auto">
+                  <p className="text-[#cccccc]/70 text-xs uppercase tracking-wider mb-3">Connect</p>
+                  <div className="flex flex-col gap-2">
+                    <a
+                      href="https://github.com/SwastikSharma15"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded bg-[#1e1e1e] hover:bg-[#2d2d2d] border border-[#3c3c3c] hover:border-[#4ec9b0] transition-all text-[#cccccc] text-xs"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v 3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+                      GitHub
+                    </a>
+                    <a
+                      href="https://www.linkedin.com/in/swastik15sharma/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded bg-[#1e1e1e] hover:bg-[#2d2d2d] border border-[#3c3c3c] hover:border-[#569cd6] transition-all text-[#cccccc] text-xs"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/>
+                      </svg>
+                      LinkedIn
+                    </a>
+                    <a
+                      href="https://www.swastikmacolio.in/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 rounded bg-[#1e1e1e] hover:bg-[#2d2d2d] border border-[#3c3c3c] hover:border-[#dcdcaa] transition-all text-[#cccccc] text-xs"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.658 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                      Portfolio
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           )}
 
