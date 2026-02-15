@@ -2,6 +2,8 @@
 
 A browser-based Visual Studio Code simulator built with React, Vite, and Tailwind CSS. This interactive IDE recreation features a fully functional file explorer, editor with syntax highlighting, activity bar, and an integrated terminal panel - complete with an engaging interactive animation game.
 
+![VS Code Web IDE Preview](./public/vscode.png)
+
 ## ✨ Features
 
 ### 🎨 UI Components
